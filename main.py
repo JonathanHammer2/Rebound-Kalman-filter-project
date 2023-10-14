@@ -8,6 +8,7 @@
 # Configuration   coder   date      change
 #    --           YW       4/23     --
 #     A           JH       9/19/23  Reversed earth and mecury, venus to put inner planets first in models
+#    --           YW       10/14/23 Added some questions as comments
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,10 +64,15 @@ def main():
     for i in range(8):
         if i < 2:
             sim_2p[i].particles[2].hash = 'Earth'
+            sim_2p[i].particles[1].hash = 'otherPlanet'
         elif i == 2:
             sim_2p[i].particles[3].hash = 'Earth'  # Add a hash tag
         else:
             sim_2p[i].particles[1].hash = 'Earth'  # Add a hash tag
+            sim_2p[i].particles[2].hash = 'otherPlanet'
+
+            # Here I added a hash tag for the other planet for the 
+            # convenience of indexing later. -- YW
 
         sim_2p[i].move_to_com()
         ps_2p.append(sim_2p[i].particles)
@@ -133,8 +139,12 @@ def main():
 
                 # Set objects for planet interaction integration
                 ps_2p[j][0]  = ps[0] # Sun
-                ps_2p[j][1]  = ps['Earth'] # Earth
-                ps_2p[j][2]  = ps[j + 1]  # the other planet
+                # ps_2p[j][1]  = ps['Earth'] # Earth
+                # ps_2p[j][2]  = ps[j + 1]  # the other planet
+                ps_2p[j]['Earth']=ps['Earth'] # Earth
+                ps_2p[j]['otherPlanet']=ps[j + 1]  # the other planet
+                    # Here I changed the index of the other planet, because
+                    # Jonathan changed the order of adding particles. -- YW
 
                 ecc11 = ps_2p[j]['Earth'].calculate_orbit(primary=ps_2p[j][0]).e
                 sim_2p[j].integrate(t+delta_t) # integrate a tiny step
@@ -146,12 +156,21 @@ def main():
                 # because the partial e_dot is too unstable
                 # The denominator has already divided by delta_t,
                 # because of the integration from t to t+delta_t.
-                H_mat.append(e_dott / (ps_2p[j][2].x  - ps[j+1].x ))
-                H_mat.append(e_dott / (ps_2p[j][2].vx - ps[j+1].vx))
-                H_mat.append(e_dott / (ps_2p[j][2].y  - ps[j+1].y ))
-                H_mat.append(e_dott / (ps_2p[j][2].vy - ps[j+1].vy))
-                H_mat.append(e_dott / (ps_2p[j][2].z  - ps[j+1].z ))
-                H_mat.append(e_dott / (ps_2p[j][2].vz - ps[j+1].vz))
+        
+                # H_mat.append(e_dott / (ps_2p[j][2].x  - ps[j+1].x ))
+                # H_mat.append(e_dott / (ps_2p[j][2].vx - ps[j+1].vx))
+                # H_mat.append(e_dott / (ps_2p[j][2].y  - ps[j+1].y ))
+                # H_mat.append(e_dott / (ps_2p[j][2].vy - ps[j+1].vy))
+                # H_mat.append(e_dott / (ps_2p[j][2].z  - ps[j+1].z ))
+                # H_mat.append(e_dott / (ps_2p[j][2].vz - ps[j+1].vz))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].x  - ps[j+1].x ))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].vx - ps[j+1].vx))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].y  - ps[j+1].y ))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].vy - ps[j+1].vy))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].z  - ps[j+1].z ))
+                H_mat.append(e_dott / (ps_2p[j]['otherPlanet'].vz - ps[j+1].vz))
+                    # Here I changed the index of the other planet, because
+                    # Jonathan changed the order of adding particles. -- YW
 
    #     print(H_mat)
 
@@ -174,6 +193,10 @@ def main():
             e_dot_lst.append(e_dot)
             tlast = t
             ecclast = ecc
+
+        ''' To Jonathan: about this alpha filter, I have a question.  If we calculate e_dot in this way,
+        there will be no contribution of those Sun-Earth-otherPlanet systems. Then, how will we calculate
+        the H matrix? ---- YW '''
 
         # if (ti + 1) % int(0.1 * Nout) == 0:  # Monitor the process
         #     print('Progress(%):', (ti + 1) // int(0.1 * Nout) * 10)
